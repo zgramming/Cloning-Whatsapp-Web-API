@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum GroupType {
+  PRIVATE
+  PUBLIC
+  GROUP
+}
+
+enum TypeMessage {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+}
+
+enum StatusUser {
+  active
+  inactive
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  phone        String        @unique
+  password     String
+  avatar       String?
+  status       StatusUser    @default(active)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  group_member GroupMember[]
+  message      Message[]
+
+  @@map("user")
+}
+
+model Group {
+  id         String    @id @default(uuid())
+  name       String
+  code       String    @unique
+  type       GroupType
+  avatar     String?
+  last_msg   String?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  group_member GroupMember[]
+  Message      Message[]
+
+  @@map("group")
+}
+
+model GroupMember {
+  id         String    @id @default(uuid())
+  group_id   String
+  user_id    String
+  join_at    DateTime  @default(now())
+  leave_at   DateTime?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("group_member")
+}
+
+model Message {
+  id         String      @id @default(uuid())
+  group_id   String
+  from       String
+  message    String      @db.Text
+  type       TypeMessage
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  deleted_at DateTime?
+  deleted_by String?
+
+  group    Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  fromUser User  @relation(fields: [from], references: [id], onDelete: Cascade)
+
+  @@map("message")
+}

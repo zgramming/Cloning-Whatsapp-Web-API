@@ -1,0 +1,7 @@
+npm init -y
+npm i express dotenv helmet axios bcrypt cors jsonwebtoken cookie-parser errorhandler express-validator
+npm i typescript ts-node nodemon @types/bcrypt @types/node @types/express eslint eslint-config-airbnb @types/cookie-parser @types/cors @types/errorhandler -D
+npx eslint --init
+npx tsc --init
+Buat .env .env.file
+Buat script di package.json
