@@ -52,7 +52,7 @@ model Group {
   updated_at  DateTime  @updatedAt
 
   group_member GroupMember[]
-  Message      Message[]
+  messages     Message[]
 
   sender User? @relation(fields: [last_sender], references: [id], onDelete: Cascade)
 

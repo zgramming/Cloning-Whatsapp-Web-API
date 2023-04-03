@@ -1,58 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 
-import { GroupCreateDTO, GroupPrivateCreateDTO, GroupUpdateDTO } from './group.dto';
+import { GroupCreateDTO, GroupPrivateCreateDTO, GroupUpdateDTO, GroupUpdateLastMessageDTO } from './group.dto';
 
 const prisma = new PrismaClient({
   log: ['query', 'info', 'warn'],
 });
 export class GroupService {
-  static async createPrivateGroup({ userId, yourId }: GroupPrivateCreateDTO) {
-    /// If group id is not exists, create new group
-    const name = `Private Group ${yourId}_${userId}`;
-    const code = `PRIVATE_${yourId}_${userId}`;
-
-    // Create group with members (yourId, userId) and return group
-    const groupCreated = await prisma.group.create({
-      data: {
-        name,
-        code,
-        type: 'PRIVATE',
-        group_member: {
-          createMany: {
-            data: [
-              {
-                user_id: yourId,
-              },
-              {
-                user_id: userId,
-              },
-            ],
-          },
-        },
-      },
-    });
-
-    return groupCreated;
-  }
-
-  static async createGroup(group: GroupCreateDTO) {
-    if (group.type === 'PRIVATE' || group.type === 'PUBLIC') {
-    }
-
-    if (group.type === 'GROUP') {
-    }
-
-    const groupCreated = await prisma.group.create({
-      data: {
-        name: group.name,
-        code: group.code,
-        avatar: group.avatar,
-        type: group.type,
-      },
-    });
-    return groupCreated;
-  }
-
   static async getGroupById(id: string) {
     const group = await prisma.group.findUnique({
       where: {
@@ -91,6 +44,61 @@ export class GroupService {
     });
 
     return groups;
+  }
+
+  static async createPrivateGroup({ userId, yourId }: GroupPrivateCreateDTO) {
+    /// If group id is not exists, create new group
+    const name = `Private Group ${yourId}_${userId}`;
+    const code = `PRIVATE_${yourId}_${userId}`;
+
+    // Create group with members (yourId, userId) and return group
+    const groupCreated = await prisma.group.create({
+      data: {
+        name,
+        code,
+        type: 'PRIVATE',
+        group_member: {
+          createMany: {
+            data: [
+              {
+                user_id: yourId,
+              },
+              {
+                user_id: userId,
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    return groupCreated;
+  }
+
+  static async createGroup(group: GroupCreateDTO) {
+    const groupCreated = await prisma.group.create({
+      data: {
+        name: group.name,
+        code: group.code,
+        avatar: group.avatar,
+        type: group.type,
+      },
+    });
+    return groupCreated;
+  }
+
+  static async updateLastMessage({ groupId, last_sender, message }: GroupUpdateLastMessageDTO) {
+    const groupUpdated = await prisma.group.update({
+      where: {
+        id: groupId,
+      },
+      data: {
+        last_msg: message,
+        last_sender,
+      },
+    });
+
+    return groupUpdated;
   }
 
   static async updateGroup(id: string, group: GroupUpdateDTO) {

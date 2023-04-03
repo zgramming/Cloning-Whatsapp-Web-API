@@ -3,6 +3,7 @@ import { body, param } from 'express-validator';
 
 import { AuthController } from './controllers/auth.controller';
 import { GroupController } from './controllers/group.controller';
+import { MessageController } from './controllers/message.controller';
 import { UserController } from './controllers/user.controller';
 import { validateToken } from './middlewares/validate-token.middleware';
 import { expressValidatorCheck } from './utils/express-validator.helper';
@@ -86,8 +87,23 @@ router.put(
 );
 router.delete('/group/:id', validateToken, param('id').isUUID(), expressValidatorCheck, GroupController.deleteGroup);
 
-// Group Member routes
-
 // Message routes
+
+router.get(
+  '/message/:groupId',
+  validateToken,
+  param('groupId').isUUID(),
+  expressValidatorCheck,
+  MessageController.getMessagesByGroupId,
+);
+router.post(
+  '/message',
+  validateToken,
+  body('message').isString(),
+  body('group_id').isUUID(),
+  body('type').isString(),
+  expressValidatorCheck,
+  MessageController.createMessage,
+);
 
 export default router;
