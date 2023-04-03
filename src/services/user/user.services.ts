@@ -2,6 +2,7 @@ import { hashSync } from 'bcrypt';
 
 import { PrismaClient } from '@prisma/client';
 
+import ResponseError from '../../interfaces/response-error.interface';
 import { UserCreateDTO, UserUpdateDTO } from './user.dto';
 
 const saltRounds = 10;
@@ -23,6 +24,18 @@ export class UserService {
   }
 
   static async createUser(body: UserCreateDTO) {
+    const phoneIsExist = await prisma.user.findUnique({
+      where: {
+        phone: body.phone,
+      },
+    });
+
+    if (phoneIsExist) {
+      const error = new Error('Phone is already exist') as ResponseError;
+      error.status = 400;
+      throw error;
+    }
+
     const result = await prisma.user.create({
       data: {
         name: body.name,
@@ -37,7 +50,7 @@ export class UserService {
   }
 
   static async updateUser(id: string, body: UserUpdateDTO) {
-    return prisma.user.update({
+    const result = await prisma.user.update({
       where: {
         id: id,
       },
@@ -46,6 +59,8 @@ export class UserService {
         name: body.name,
       },
     });
+
+    return result;
   }
 
   static async deleteUser(id: string) {

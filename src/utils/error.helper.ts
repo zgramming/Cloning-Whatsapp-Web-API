@@ -1,7 +1,30 @@
 import { Request, Response } from 'express';
+
+import {
+  PrismaClientInitializationError,
+  PrismaClientKnownRequestError,
+  PrismaClientRustPanicError,
+  PrismaClientUnknownRequestError,
+  PrismaClientValidationError,
+} from '@prisma/client/runtime/library';
+
 import ResponseError from '../interfaces/response-error.interface';
 
 export const errorHandler = (err: unknown, req: Request, res: Response) => {
+  if (
+    err instanceof PrismaClientKnownRequestError ||
+    err instanceof PrismaClientUnknownRequestError ||
+    err instanceof PrismaClientRustPanicError ||
+    err instanceof PrismaClientInitializationError ||
+    err instanceof PrismaClientValidationError
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+      data: null,
+    });
+  }
+
   if (err instanceof Error) {
     const { name, message, status } = err as ResponseError;
 

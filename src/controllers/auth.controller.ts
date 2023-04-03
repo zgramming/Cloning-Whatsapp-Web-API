@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
-import ResponseError from '../interfaces/response-error.interface';
+
 import { AuthService } from '../services/auth/auth.services';
 import { errorHandler } from '../utils/error.helper';
+import { generateToken } from '../utils/token.helper';
 
 export class AuthController {
   static async login(req: Request, res: Response) {
@@ -11,6 +12,7 @@ export class AuthController {
         success: true,
         message: 'Login success',
         data: result,
+        token: generateToken(result.id),
       });
     } catch (err) {
       errorHandler(err, req, res);
