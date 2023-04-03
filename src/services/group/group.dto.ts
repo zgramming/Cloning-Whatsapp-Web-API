@@ -1,5 +1,10 @@
 import { GroupType } from '@prisma/client';
 
+export interface GroupPrivateCreateDTO {
+  yourId: string;
+  userId: string;
+}
+
 export interface GroupCreateDTO {
   name: string;
   code: string;

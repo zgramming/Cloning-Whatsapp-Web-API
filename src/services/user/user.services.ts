@@ -23,6 +23,15 @@ export class UserService {
     return result;
   }
 
+  static async getUserByPhone(phone: string) {
+    const result = await prisma.user.findUnique({
+      where: {
+        phone,
+      },
+    });
+    return result;
+  }
+
   static async createUser(body: UserCreateDTO) {
     const phoneIsExist = await prisma.user.findUnique({
       where: {

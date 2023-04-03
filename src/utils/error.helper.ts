@@ -18,10 +18,13 @@ export const errorHandler = (err: unknown, req: Request, res: Response) => {
     err instanceof PrismaClientInitializationError ||
     err instanceof PrismaClientValidationError
   ) {
+    console.log({ err });
+
     return res.status(400).json({
       success: false,
-      message: err.message,
       data: null,
+      message: err.message,
+      stacktrace: err.stack,
     });
   }
 

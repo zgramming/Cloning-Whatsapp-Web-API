@@ -41,17 +41,20 @@ model Contact {
 }
 
 model Group {
-  id         String    @id @default(uuid())
-  name       String
-  code       String    @unique
-  type       GroupType
-  avatar     String?
-  last_msg   String?
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
+  id          String    @id @default(uuid())
+  name        String
+  code        String    @unique
+  type        GroupType
+  avatar      String?
+  last_msg    String?
+  last_sender String? // FK
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
 
   group_member GroupMember[]
   Message      Message[]
+
+  sender User? @relation(fields: [last_sender], references: [id], onDelete: Cascade)
 
   @@map("group")
 }
@@ -68,6 +71,7 @@ model GroupMember {
   group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@unique([group_id, user_id])
   @@map("group_member")
 }
 
@@ -100,6 +104,7 @@ model User {
   group_member GroupMember[]
   message      Message[]
   contact      Contact[]
+  Group        Group[]
 
   @@map("user")
 }

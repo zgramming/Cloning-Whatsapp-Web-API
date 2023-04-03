@@ -22,7 +22,7 @@ const generateToken = (userId: string) => {
   return token;
 };
 
-const verifyToken = ({ req, onErrorToken, onErrorVerify }: VerifyTokenType): string | undefined => {
+const getUserIdFromToken = ({ req, onErrorToken, onErrorVerify }: VerifyTokenType): string | undefined => {
   const secretKey = process.env.JWT_SECRECT_KEY ?? '';
 
   const token = req.headers.authorization?.split(' ')[1];
@@ -44,4 +44,4 @@ const verifyToken = ({ req, onErrorToken, onErrorVerify }: VerifyTokenType): str
   return userId;
 };
 
-export { generateToken, verifyToken };
+export { generateToken, getUserIdFromToken };

@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
-import { verifyToken } from '../utils/token.helper';
+import { getUserIdFromToken } from '../utils/token.helper';
 
 export const validateToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = verifyToken({
+    const userId = getUserIdFromToken({
       req,
       onErrorToken(message) {
         return res.status(401).json({
