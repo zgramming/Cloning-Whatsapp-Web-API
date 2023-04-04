@@ -25,13 +25,17 @@ export class UserController {
   }
 
   static async getUserByPhone(req: Request, res: Response) {
-    const result = await UserService.getUserByPhone(req.params.phone);
+    try {
+      const result = await UserService.getUserByPhone(req.params.phone);
 
-    return res.status(200).json({
-      message: 'User',
-      success: true,
-      data: result,
-    });
+      return res.status(200).json({
+        message: 'User',
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      return errorHandler(error, req, res);
+    }
   }
 
   static async createUser(req: Request, res: Response) {

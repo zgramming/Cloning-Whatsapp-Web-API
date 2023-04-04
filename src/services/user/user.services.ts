@@ -24,9 +24,11 @@ export class UserService {
   }
 
   static async getUserByPhone(phone: string) {
-    const result = await prisma.user.findUnique({
+    const result = await prisma.user.findFirstOrThrow({
       where: {
-        phone,
+        phone: {
+          equals: phone,
+        },
       },
     });
     return result;
