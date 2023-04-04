@@ -7,7 +7,31 @@ import { getUserIdFromToken } from '../utils/token.helper';
 export class GroupController {
   static async getGroupById(req: Request, res: Response) {
     const id = req.params.id;
+    const userId = getUserIdFromToken({ req }) || '';
+
     const group = await GroupService.getGroupById(id);
+
+    if (group.type === 'PRIVATE') {
+      const interlocutors = group.group_member.find((member) => member.user_id !== userId);
+
+      if (!interlocutors) {
+        return res.status(404).send({
+          status: false,
+          message: 'Lawan bicara tidak ditemukan',
+          data: null,
+        });
+      }
+
+      return res.status(200).send({
+        status: true,
+        message: 'Group found successfully',
+        data: {
+          ...group,
+          interlocutors,
+        },
+      });
+    }
+
     return res.status(200).send({
       status: true,
       message: 'Group found successfully',
@@ -25,18 +49,10 @@ export class GroupController {
     });
   }
 
-  static async getAllGroups(req: Request, res: Response) {
-    const groups = await GroupService.getAllGroups();
-    return res.status(200).send({
-      status: true,
-      message: 'Groups found successfully',
-      data: groups,
-    });
-  }
-
-  static async getMyGroup(req: Request, res: Response) {
+  static async getMyGroups(req: Request, res: Response) {
     const userId = getUserIdFromToken({ req }) || '';
-    const groups = await GroupService.getMyGroup(userId);
+    const groups = await GroupService.getMyGroups(userId);
+
     return res.status(200).send({
       status: true,
       message: 'Groups found successfully',
@@ -69,7 +85,7 @@ export class GroupController {
         data: groupCreated,
       });
     } catch (error) {
-      errorHandler(error, req, res);
+      return errorHandler(error, req, res);
     }
   }
 

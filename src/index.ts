@@ -49,8 +49,7 @@ router.put(
 
 // Group routes
 
-router.get('/group', validateToken, GroupController.getAllGroups);
-router.get('/group/me', validateToken, GroupController.getMyGroup);
+router.get('/group/me', validateToken, GroupController.getMyGroups);
 router.get('/group/:id', validateToken, param('id').isUUID(), expressValidatorCheck, GroupController.getGroupById);
 router.get(
   '/group/code/:code',

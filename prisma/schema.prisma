@@ -104,7 +104,7 @@ model User {
   group_member GroupMember[]
   message      Message[]
   contact      Contact[]
-  Group        Group[]
+  group        Group[]
 
   @@map("user")
 }
