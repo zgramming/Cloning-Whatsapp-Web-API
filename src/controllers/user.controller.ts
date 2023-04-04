@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 
 import { UserService } from '../services/user/user.services';
 import { errorHandler } from '../utils/error.helper';
+import { getUserIdFromToken } from '../utils/token.helper';
 
 export class UserController {
   static async getUser(req: Request, res: Response) {
@@ -26,12 +27,18 @@ export class UserController {
 
   static async getUserByPhone(req: Request, res: Response) {
     try {
-      const result = await UserService.getUserByPhone(req.params.phone);
+      const { phone } = req.params;
+      const userId = getUserIdFromToken({ req }) || '';
+      const { result, userAlreadyInMyGroup } = await UserService.getUserByPhone({
+        phone,
+        userId,
+      });
 
       return res.status(200).json({
         message: 'User',
         success: true,
         data: result,
+        group: userAlreadyInMyGroup,
       });
     } catch (error) {
       return errorHandler(error, req, res);

@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 
 import ResponseError from '../../interfaces/response-error.interface';
 import { UserCreateDTO, UserUpdateDTO } from './user.dto';
+import { CODE_PRIVATE_GROUP } from '../../utils/constant';
 
 const saltRounds = 10;
 const prisma = new PrismaClient();
@@ -23,15 +24,44 @@ export class UserService {
     return result;
   }
 
-  static async getUserByPhone(phone: string) {
+  static async getUserByPhone({ phone, userId }: { phone: string; userId: string }) {
     const result = await prisma.user.findFirstOrThrow({
       where: {
         phone: {
           equals: phone,
         },
       },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        avatar: true,
+      },
     });
-    return result;
+
+    const userAlreadyInMyGroup = await prisma.group.findFirst({
+      where: {
+        OR: [
+          {
+            code: CODE_PRIVATE_GROUP({
+              yourId: userId,
+              userId: result.id,
+            }),
+          },
+          {
+            code: CODE_PRIVATE_GROUP({
+              yourId: result.id,
+              userId,
+            }),
+          },
+        ],
+      },
+    });
+
+    return {
+      result,
+      userAlreadyInMyGroup,
+    };
   }
 
   static async createUser(body: UserCreateDTO) {
