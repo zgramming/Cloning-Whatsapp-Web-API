@@ -9,6 +9,7 @@ export class GroupController {
     const id = req.params.id;
     const group = await GroupService.getGroupById(id);
     return res.status(200).send({
+      status: true,
       message: 'Group found successfully',
       data: group,
     });
@@ -18,6 +19,7 @@ export class GroupController {
     const code = req.params.code;
     const group = await GroupService.getGroupByCode(code);
     return res.status(200).send({
+      status: true,
       message: 'Group found successfully',
       data: group,
     });
@@ -26,6 +28,7 @@ export class GroupController {
   static async getAllGroups(req: Request, res: Response) {
     const groups = await GroupService.getAllGroups();
     return res.status(200).send({
+      status: true,
       message: 'Groups found successfully',
       data: groups,
     });
@@ -35,6 +38,7 @@ export class GroupController {
     const userId = getUserIdFromToken({ req }) || '';
     const groups = await GroupService.getMyGroup(userId);
     return res.status(200).send({
+      status: true,
       message: 'Groups found successfully',
       data: groups,
     });
@@ -44,6 +48,7 @@ export class GroupController {
     const group = req.body;
     const groupCreated = await GroupService.createGroup(group);
     return res.status(201).send({
+      status: true,
       message: 'Group created successfully',
       data: groupCreated,
     });
@@ -73,6 +78,7 @@ export class GroupController {
     const group = req.body;
     const groupUpdated = await GroupService.updateGroup(id, group);
     return res.status(200).send({
+      status: true,
       message: 'Group updated successfully',
       data: groupUpdated,
     });
@@ -82,6 +88,7 @@ export class GroupController {
     const id = req.params.id;
     const groupDeleted = await GroupService.deleteGroup(id);
     return res.status(200).send({
+      status: true,
       message: 'Group deleted successfully',
       data: groupDeleted,
     });

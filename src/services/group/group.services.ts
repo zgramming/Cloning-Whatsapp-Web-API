@@ -30,6 +30,11 @@ export class GroupService {
   }
 
   static async getMyGroup(userId: string) {
+
+    // With this function, we accomodir to fetch private, public, and group chat
+    // To accomodir private / public group, we just need to get 1 member of group
+    // To accomodate group chat, we need last sender with relation to user
+
     const groups = await prisma.group.findMany({
       where: {
         last_msg: {
@@ -38,6 +43,36 @@ export class GroupService {
         group_member: {
           some: {
             user_id: userId,
+          },
+        },
+      },
+      include: {
+        sender: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+        group_member: {
+          /// We don't need to get all members, just get 1 member to accomodate private / public group
+          take: 1,
+          where: {
+            user_id: {
+              not: userId,
+            },
+          },
+          select: {
+            user_id: true,
+            join_at: true,
+            leave_at: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
           },
         },
       },

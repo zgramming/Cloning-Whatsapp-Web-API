@@ -90,7 +90,7 @@ router.delete('/group/:id', validateToken, param('id').isUUID(), expressValidato
 // Message routes
 
 router.get(
-  '/message/:groupId',
+  '/message/group/:groupId',
   validateToken,
   param('groupId').isUUID(),
   expressValidatorCheck,
