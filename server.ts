@@ -1,15 +1,13 @@
-import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import errorHandler from 'errorhandler';
-import IndexRouter from './src/index';
+import express from 'express';
+import { createServer } from 'http';
 import path from 'path';
 import { Server } from 'socket.io';
-import { createServer } from 'http';
-import { EMIT_EVENT_CONNECT, EMIT_EVENT_DISCONNECT } from './src/utils/constant';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+import IndexRouter from './src/index';
+import { SocketIOService } from './src/services/socket-io/socket-io.services';
 
 dotenv.config();
 
@@ -38,18 +36,16 @@ app.use(IndexRouter);
 
 io.on('connection', (socket) => {
   /// Indicate uesr already connected on home page
-  socket.on(EMIT_EVENT_CONNECT, async (userId) => {
-    if (userId) {
-      console.log(`[server]: User ${userId} connected`);
-    }
-  });
+  SocketIOService.onConnect(socket);
+
+  /// Listen typing chat event
+  SocketIOService.onTypingMessage(socket);
+
+  /// Listen send message chat event
+  SocketIOService.onSendingMessage(socket);
 
   /// Indicate user already disconnected on home page
-  socket.on(EMIT_EVENT_DISCONNECT, (userId) => {
-    if (userId) {
-      console.log(`[server]: User ${userId} disconnected`);
-    }
-  });
+  SocketIOService.onDisconnect(socket);
 });
 
 httpServer.listen(port, () => {
