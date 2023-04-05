@@ -20,7 +20,7 @@ export class MessageService {
   static async create({ from, group_id, message, type }: MessageCreateDTO) {
     const transaction = await prisma.$transaction(async (trx) => {
       // Update last message and last sender
-      const groupUpdateLastMessage = await trx.group.update({
+      await trx.group.update({
         where: {
           id: group_id,
         },
