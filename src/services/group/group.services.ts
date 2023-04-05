@@ -22,11 +22,16 @@ export class GroupService {
                 id: true,
                 name: true,
                 phone: true,
+                avatar: true,
               },
             },
           },
         },
-        messages: true,
+        messages: {
+          orderBy: {
+            created_at: 'asc',
+          },
+        },
       },
     });
 
