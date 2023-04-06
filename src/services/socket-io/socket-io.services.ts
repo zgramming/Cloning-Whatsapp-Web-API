@@ -2,21 +2,35 @@ import { Socket } from 'socket.io';
 
 import { PrismaClient } from '@prisma/client';
 
+import { SocketIOChannelInterface } from '../../interfaces/socket-io.channel.interface';
+import { SocketIOGroupInviteInterface } from '../../interfaces/socket-io.group.invite.interface';
 import { SocketIOMessageCreateResponseInterface } from '../../interfaces/socket-io.message.create-response.interface';
 import { SocketIOMessageTypingInterface } from '../../interfaces/socket-io.message.typing.interface';
 import {
   EMIT_EVENT_CONNECT,
   EMIT_EVENT_CUSTOM_DISCONNECT,
+  EMIT_EVENT_INVITE_NEW_GROUP,
   EMIT_EVENT_SEND_MESSAGE,
   EMIT_EVENT_TYPING,
 } from '../../utils/constant';
 
 const prisma = new PrismaClient();
 
+/// list of user id connected
+export let channels: SocketIOChannelInterface = {};
+
 export class SocketIOService {
   static async onConnect(socket: Socket) {
     socket.on(EMIT_EVENT_CONNECT, async (userId) => {
       if (userId) {
+        /// Add socket connection into object channels
+
+        channels[userId] = socket;
+
+        /// Join own group
+        socket.join(userId);
+
+        /// If have group, join to group
         const groups = await prisma.groupMember.findMany({
           select: {
             group_id: true,
@@ -24,11 +38,53 @@ export class SocketIOService {
           where: { user_id: userId },
         });
 
+        if (groups.length === 0) {
+          console.log(`[Socket IO Server]: User ${userId} connected and not join to any group`);
+          return;
+        }
+
         const idsGroup = groups.map((group) => group.group_id);
 
         console.log(`[Socket IO Server]: User ${userId} connected and join to group ${idsGroup}`);
+
         socket.join(idsGroup);
       }
+    });
+  }
+
+  static async onInviteNewGroup(socket: Socket) {
+    socket.on(EMIT_EVENT_INVITE_NEW_GROUP, async (data: SocketIOGroupInviteInterface) => {
+      const { group_id, invited_by } = data;
+
+      const groupMember = await prisma.groupMember.findMany({
+        select: { user_id: true },
+        where: {
+          group_id,
+        },
+      });
+      const groupMemberUserIds = groupMember.map((member) => member.user_id);
+
+      for (const userId of groupMemberUserIds) {
+        const channelSocket = channels[userId];
+
+        if (channelSocket) {
+          // Join user to group channel
+          channelSocket.join(group_id);
+
+          // Only emit to inviter user
+          if (userId !== invited_by) {
+            channelSocket.to(userId).emit(EMIT_EVENT_INVITE_NEW_GROUP, data);
+          }
+        }
+      }
+
+      groupMemberUserIds.forEach((userId) => {
+        const channelSocket = channels[userId];
+        if (channelSocket) {
+          channelSocket.join(group_id);
+          channelSocket.emit(EMIT_EVENT_INVITE_NEW_GROUP, data);
+        }
+      });
     });
   }
 

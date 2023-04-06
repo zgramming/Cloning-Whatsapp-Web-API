@@ -38,6 +38,9 @@ io.on('connection', (socket) => {
   /// Indicate uesr already connected on home page
   SocketIOService.onConnect(socket);
 
+  /// Listen new group chat event
+  SocketIOService.onInviteNewGroup(socket);
+
   /// Listen typing chat event
   SocketIOService.onTypingMessage(socket);
 
