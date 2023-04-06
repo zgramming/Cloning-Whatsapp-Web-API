@@ -3,9 +3,10 @@ import { Socket } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 
 import { SocketIOMessageCreateResponseInterface } from '../../interfaces/socket-io.message.create-response.interface';
+import { SocketIOMessageTypingInterface } from '../../interfaces/socket-io.message.typing.interface';
 import {
   EMIT_EVENT_CONNECT,
-  EMIT_EVENT_DISCONNECT,
+  EMIT_EVENT_CUSTOM_DISCONNECT,
   EMIT_EVENT_SEND_MESSAGE,
   EMIT_EVENT_TYPING,
 } from '../../utils/constant';
@@ -32,11 +33,12 @@ export class SocketIOService {
   }
 
   static async onTypingMessage(socket: Socket) {
-    socket.on(EMIT_EVENT_TYPING, (data) => {
-      const { userId, groupId, message } = data;
-      console.log(`[Socket IO Server]: User ${userId} is typing in group ${groupId} with message ${message}`);
+    socket.on(EMIT_EVENT_TYPING, (data: SocketIOMessageTypingInterface) => {
+      const { name, group_id, is_typing } = data;
+      const isTyping = is_typing ? 'is typing...' : 'stop typing...';
+      console.log(`[Socket IO Server]: User ${name} ${isTyping} in group ${group_id} ...`);
 
-      socket.broadcast.to(groupId).emit(EMIT_EVENT_TYPING, data);
+      socket.broadcast.to(group_id).emit(EMIT_EVENT_TYPING, data);
     });
   }
 
@@ -51,8 +53,8 @@ export class SocketIOService {
     });
   }
 
-  static async onDisconnect(socket: Socket) {
-    socket.on(EMIT_EVENT_DISCONNECT, async (userId) => {
+  static async onCustomDisconnect(socket: Socket) {
+    socket.on(EMIT_EVENT_CUSTOM_DISCONNECT, async (userId) => {
       if (userId) {
         const groups = await prisma.groupMember.findMany({
           select: {
@@ -71,6 +73,12 @@ export class SocketIOService {
           console.log(`[Socket IO Server]: User ${userId} leave group ${id}`);
         });
       }
+    });
+  }
+
+  static async onDisconnect(socket: Socket) {
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
     });
   }
 }

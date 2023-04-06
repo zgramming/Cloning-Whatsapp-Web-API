@@ -45,6 +45,9 @@ io.on('connection', (socket) => {
   SocketIOService.onSendingMessage(socket);
 
   /// Indicate user already disconnected on home page
+  SocketIOService.onCustomDisconnect(socket);
+
+  /// native socket io event disconnect
   SocketIOService.onDisconnect(socket);
 });
 
