@@ -27,6 +27,7 @@ export class MessageService {
         data: {
           last_msg: message,
           last_sender: from,
+          updated_at: new Date(),
         },
       });
 

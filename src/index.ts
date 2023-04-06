@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { body, param } from 'express-validator';
 
 import { AuthController } from './controllers/auth.controller';
+import { ContactController } from './controllers/contact.controller';
 import { GroupController } from './controllers/group.controller';
 import { MessageController } from './controllers/message.controller';
 import { UserController } from './controllers/user.controller';
@@ -103,6 +104,19 @@ router.post(
   body('type').isString(),
   expressValidatorCheck,
   MessageController.createMessage,
+);
+
+// Contact routes
+
+router.get('/contact/me', validateToken, ContactController.getContactsByOwnerId);
+
+router.post(
+  '/contact',
+  validateToken,
+  body('group_id').isUUID(),
+  body('user_id').isUUID(),
+  expressValidatorCheck,
+  ContactController.createContact,
 );
 
 export default router;

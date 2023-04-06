@@ -31,12 +31,17 @@ enum StatusUser {
 
 model Contact {
   id         String   @id @default(uuid())
+  owner_id   String
   user_id    String
+  group_id   String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  owner User  @relation(name: "OwnerContact", fields: [owner_id], references: [id], onDelete: Cascade)
+  user  User  @relation(name: "UserContact", fields: [user_id], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
 
+  @@unique([owner_id, user_id])
   @@map("contact")
 }
 
@@ -54,7 +59,8 @@ model Group {
   group_member GroupMember[]
   messages     Message[]
 
-  sender User? @relation(fields: [last_sender], references: [id], onDelete: Cascade)
+  sender  User?     @relation(fields: [last_sender], references: [id], onDelete: Cascade)
+  contact Contact[]
 
   @@map("group")
 }
@@ -93,18 +99,19 @@ model Message {
 }
 
 model User {
-  id           String        @id @default(uuid())
-  name         String
-  phone        String        @unique
-  password     String
-  avatar       String?
-  status       StatusUser    @default(active)
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
-  group_member GroupMember[]
-  message      Message[]
-  contact      Contact[]
-  group        Group[]
+  id            String        @id @default(uuid())
+  name          String
+  phone         String        @unique
+  password      String
+  avatar        String?
+  status        StatusUser    @default(active)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  group_member  GroupMember[]
+  message       Message[]
+  group         Group[]
+  contact_owner Contact[]     @relation(name: "OwnerContact")
+  contact_user  Contact[]     @relation(name: "UserContact")
 
   @@map("user")
 }

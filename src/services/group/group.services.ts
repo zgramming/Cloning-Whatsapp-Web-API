@@ -62,6 +62,11 @@ export class GroupService {
         },
       },
       include: {
+        _count: {
+          select: {
+            contact: true,
+          },
+        },
         group_member: {
           /// We don't need to get all members, just get 1 member to accomodate private / public group
           take: 1,
@@ -87,10 +92,13 @@ export class GroupService {
 
     const mapping = groups.map((group) => {
       if (group.type === 'PRIVATE') {
-        return {
+        const result = {
           ...group,
           interlocutors: group.group_member[0].user,
+          already_on_contact: group._count.contact > 0,
         };
+
+        return result;
       }
 
       return group;
