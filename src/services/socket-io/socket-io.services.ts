@@ -77,14 +77,6 @@ export class SocketIOService {
           }
         }
       }
-
-      groupMemberUserIds.forEach((userId) => {
-        const channelSocket = channels[userId];
-        if (channelSocket) {
-          channelSocket.join(group_id);
-          channelSocket.emit(EMIT_EVENT_INVITE_NEW_GROUP, data);
-        }
-      });
     });
   }
 
