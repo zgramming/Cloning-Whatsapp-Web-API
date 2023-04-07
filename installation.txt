@@ -1,6 +1,15 @@
 npm init -y
-npm i express dotenv helmet axios bcrypt cors jsonwebtoken cookie-parser errorhandler express-validator
-npm i typescript ts-node nodemon @types/bcrypt @types/node @types/jsonwebtoken @types/express eslint eslint-config-airbnb @types/cookie-parser @types/cors @types/errorhandler -D
+npm i express dotenv helmet axios bcrypt cors jsonwebtoken cookie-parser errorhandler express-validator sharp multer
+npm i typescript ts-node nodemon @types/bcrypt @types/node @types/jsonwebtoken @types/express eslint eslint-config-airbnb @types/cookie-parser @types/cors @types/errorhandler @types/multer -D
+
+// optional
+// If you need Socket IO
+npm i socket.io
+
+// If you need prisma
+npm i @prisma/client
+npm i prisma -D
+
 npx eslint --init
 npx tsc --init
 Buat .env .env.file

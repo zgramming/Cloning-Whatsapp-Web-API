@@ -16,7 +16,7 @@ export class UserService {
   }
 
   static async getUserById(id: string) {
-    const result = await prisma.user.findUnique({
+    const result = await prisma.user.findUniqueOrThrow({
       where: {
         id,
       },
@@ -104,13 +104,14 @@ export class UserService {
     return result;
   }
 
-  static async updateAvatar(id: string, avatar: string) {
+  static async updatePicture(id: string, avatar: Express.Multer.File) {
+    const filename = avatar.filename;
     const result = await prisma.user.update({
       where: {
         id: id,
       },
       data: {
-        avatar,
+        avatar: filename,
       },
     });
 

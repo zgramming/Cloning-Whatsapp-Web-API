@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
+import { unlinkSync } from 'fs';
 
 import { UserService } from '../services/user/user.services';
-import { errorHandler } from '../utils/error.helper';
+import { PATH_ACTUAL_AVARTAR, PATH_TEMPORARY_AVARTAR } from '../utils/constant';
+import { CustomError, errorHandler } from '../utils/error.helper';
+import { FN } from '../utils/function';
 import { getUserIdFromToken } from '../utils/token.helper';
 
 export class UserController {
@@ -55,7 +58,7 @@ export class UserController {
         data: result,
       });
     } catch (err) {
-      errorHandler(err, req, res);
+      return errorHandler(err, req, res);
     }
   }
 
@@ -74,15 +77,32 @@ export class UserController {
         data: result,
       });
     } catch (error) {
-      errorHandler(error, req, res);
+      return errorHandler(error, req, res);
     }
   }
 
-  static async updateAvatar(req: Request, res: Response) {
+  static async updatePicture(req: Request, res: Response) {
     try {
       const id = getUserIdFromToken({ req }) || '';
-      const { avatar } = req.body;
-      const result = await UserService.updateAvatar(id, avatar);
+      const user = await UserService.getUserById(id);
+      const avatar = req.file;
+
+      if (!avatar) {
+        throw CustomError('Avatar is required', 400);
+      }
+
+      const result = await UserService.updatePicture(id, avatar);
+
+      const from = `${PATH_TEMPORARY_AVARTAR}/${avatar.filename}`;
+      const to = `${PATH_ACTUAL_AVARTAR}/${result.avatar}`;
+
+      /// Remove old avatar if exists
+      if (user.avatar) {
+        unlinkSync(`${PATH_ACTUAL_AVARTAR}/${user.avatar}`);
+      }
+
+      /// Move file from temporary folder to actual folder
+      FN.moveAndDeleteOldFile(from, to);
 
       return res.status(200).json({
         message: 'User updated successfully',
@@ -90,7 +110,7 @@ export class UserController {
         data: result,
       });
     } catch (error) {
-      errorHandler(error, req, res);
+      return errorHandler(error, req, res);
     }
   }
 
@@ -105,7 +125,7 @@ export class UserController {
         data: result,
       });
     } catch (error) {
-      errorHandler(error, req, res);
+      return errorHandler(error, req, res);
     }
   }
 }

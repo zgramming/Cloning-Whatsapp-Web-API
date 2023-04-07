@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
+import multer from 'multer';
 
 import { AuthController } from './controllers/auth.controller';
 import { ContactController } from './controllers/contact.controller';
@@ -7,9 +8,32 @@ import { GroupController } from './controllers/group.controller';
 import { MessageController } from './controllers/message.controller';
 import { UserController } from './controllers/user.controller';
 import { validateToken } from './middlewares/validate-token.middleware';
+import { PATH_TEMPORARY_AVARTAR, WHITELIST_IMAGE_MIME_TYPE } from './utils/constant';
+import { CustomError, errorHandler } from './utils/error.helper';
 import { expressValidatorCheck } from './utils/express-validator.helper';
+import { FN } from './utils/function';
 
 const router = Router();
+const avatarUpload = multer({
+  storage: multer.diskStorage({
+    destination: PATH_TEMPORARY_AVARTAR,
+    filename: (req, file, cb) => {
+      cb(null, FN.uniqueFilename(file));
+    },
+  }),
+  fileFilter(req, file, callback) {
+    const mime = file.mimetype;
+    if (!WHITELIST_IMAGE_MIME_TYPE.includes(mime)) {
+      const availableMime = WHITELIST_IMAGE_MIME_TYPE.join(', ');
+      callback(CustomError(`Invalid Type ${mime}, Available Type ${availableMime}`, 400));
+    }
+
+    callback(null, true);
+  },
+  limits: {
+    fileSize: FN.maxSizeInMB(1),
+  },
+});
 
 router.get('/', (req, res) => res.send('Express + TypeScript Server'));
 
@@ -48,7 +72,22 @@ router.put(
   expressValidatorCheck,
   UserController.updateUser,
 );
-router.put('/user/avatar', validateToken, UserController.updateAvatar);
+router.put(
+  '/user/picture',
+  validateToken,
+  (req, res, next) => {
+    avatarUpload.single('avatar')(req, res, (err) => {
+      const file = req.file;
+      if (err) return errorHandler(err, req, res);
+
+      if (!file) {
+        return errorHandler(CustomError('Avatar is required', 400), req, res);
+      }
+      next();
+    });
+  },
+  UserController.updatePicture,
+);
 router.delete('/user/:id', validateToken, UserController.deleteUser);
 
 // Group routes

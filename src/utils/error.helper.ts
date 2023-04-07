@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import multer from 'multer';
 
 import {
   PrismaClientInitializationError,
@@ -29,11 +30,21 @@ export const errorHandler = (err: unknown, req: Request, res: Response) => {
   }
 
   if (err instanceof Error) {
-    const { name, message, status } = err as ResponseError;
-
+    const { name, message, status = 500 } = err as ResponseError;
     return res.status(status).json({
       success: false,
       message: message || name,
+      data: null,
+    });
+  }
+
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+      fields: err.field,
+      stacktrace: err.stack,
+      code: err.code,
       data: null,
     });
   }
@@ -44,3 +55,11 @@ export const errorHandler = (err: unknown, req: Request, res: Response) => {
     data: null,
   });
 };
+
+export const CustomError = (message: string, status: number) => {
+  const error = new Error(message) as ResponseError;
+  error.status = status;
+  return error;
+};
+
+// Path: src\utils\error.helper.ts
