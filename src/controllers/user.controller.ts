@@ -61,10 +61,46 @@ export class UserController {
 
   static async updateUser(req: Request, res: Response) {
     try {
-      const result = await UserService.updateUser(req.params.id, req.body);
+      const id = getUserIdFromToken({ req }) || '';
+      const { name, bio } = req.body;
+      const result = await UserService.updateUser(id, {
+        name,
+        bio,
+      });
 
       return res.status(200).json({
         message: 'User updated successfully',
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      errorHandler(error, req, res);
+    }
+  }
+
+  static async updateAvatar(req: Request, res: Response) {
+    try {
+      const id = getUserIdFromToken({ req }) || '';
+      const { avatar } = req.body;
+      const result = await UserService.updateAvatar(id, avatar);
+
+      return res.status(200).json({
+        message: 'User updated successfully',
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      errorHandler(error, req, res);
+    }
+  }
+
+  static async deleteUser(req: Request, res: Response) {
+    try {
+      const id = getUserIdFromToken({ req }) || '';
+      const result = await UserService.deleteUser(id);
+
+      return res.status(200).json({
+        message: 'User deleted successfully',
         success: true,
         data: result,
       });

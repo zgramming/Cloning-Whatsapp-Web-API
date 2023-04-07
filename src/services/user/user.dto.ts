@@ -10,5 +10,5 @@ export interface UserCreateDTO {
 
 export interface UserUpdateDTO {
   name: string;
-  avatar?: string;
+  bio?: string;
 }

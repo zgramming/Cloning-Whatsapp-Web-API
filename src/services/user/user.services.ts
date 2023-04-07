@@ -90,14 +90,27 @@ export class UserService {
     return result;
   }
 
-  static async updateUser(id: string, body: UserUpdateDTO) {
+  static async updateUser(id: string, { name, bio }: UserUpdateDTO) {
     const result = await prisma.user.update({
       where: {
         id: id,
       },
       data: {
-        avatar: body.avatar,
-        name: body.name,
+        name,
+        bio,
+      },
+    });
+
+    return result;
+  }
+
+  static async updateAvatar(id: string, avatar: string) {
+    const result = await prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        avatar,
       },
     });
 

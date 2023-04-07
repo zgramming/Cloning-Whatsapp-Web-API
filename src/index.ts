@@ -41,12 +41,15 @@ router.post(
   UserController.createUser,
 );
 router.put(
-  '/user/:id',
-  param('id').isUUID(),
+  '/user',
+  validateToken,
   body('name').isString(),
+  body('bio').optional().isString(),
   expressValidatorCheck,
   UserController.updateUser,
 );
+router.put('/user/avatar', validateToken, UserController.updateAvatar);
+router.delete('/user/:id', validateToken, UserController.deleteUser);
 
 // Group routes
 

@@ -104,6 +104,7 @@ model User {
   phone         String        @unique
   password      String
   avatar        String?
+  bio           String?
   status        StatusUser    @default(active)
   created_at    DateTime      @default(now())
   updated_at    DateTime      @updatedAt
