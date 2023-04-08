@@ -92,10 +92,14 @@ export class GroupService {
 
     const mapping = groups.map((group) => {
       if (group.type === 'PRIVATE') {
+        const interlocutors = group.group_member[0].user;
+        const alreadyOnContact = group._count.contact > 0;
         const result = {
           ...group,
-          interlocutors: group.group_member[0].user,
-          already_on_contact: group._count.contact > 0,
+          interlocutors: {
+            ...interlocutors,
+            already_on_contact: alreadyOnContact,
+          },
         };
 
         return result;
