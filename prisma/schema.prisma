@@ -48,7 +48,7 @@ model Contact {
 model Group {
   id          String    @id @default(uuid())
   name        String
-  code        String    @unique
+  code        String    @unique @db.VarChar(255)
   type        GroupType
   avatar      String?
   last_msg    String?

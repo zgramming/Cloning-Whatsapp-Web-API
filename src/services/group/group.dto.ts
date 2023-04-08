@@ -5,6 +5,13 @@ export interface GroupPrivateCreateDTO {
   userId: string;
 }
 
+export interface GroupGroupCreateDTO {
+  creatorId: string;
+  name: string;
+  avatar?: Express.Multer.File;
+  participants: string[];
+}
+
 export interface GroupUpdateLastMessageDTO {
   groupId: string;
   message: string;

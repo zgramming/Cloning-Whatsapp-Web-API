@@ -1,5 +1,16 @@
 import { existsSync, mkdirSync, renameSync, unlinkSync } from 'fs';
+import multer from 'multer';
 import { dirname } from 'path';
+
+import { CustomError } from './error.helper';
+
+type MulterUploadConfig = {
+  destination: string;
+  limitFileSize: number;
+  config: {
+    whitelistMimeType: string[];
+  };
+};
 
 export class FN {
   static uniqueFilename(file: Express.Multer.File) {
@@ -40,6 +51,32 @@ export class FN {
     if (existsSync(from)) {
       unlinkSync(from);
     }
+  }
+
+  static multerUploadConfig({ config, destination, limitFileSize }: MulterUploadConfig) {
+    const { whitelistMimeType } = config;
+    const result = multer({
+      storage: multer.diskStorage({
+        destination,
+        filename: (req, file, cb) => {
+          cb(null, FN.uniqueFilename(file));
+        },
+      }),
+      fileFilter(req, file, callback) {
+        const mime = file.mimetype;
+        if (!whitelistMimeType.includes(mime)) {
+          const availableMime = whitelistMimeType.join(', ');
+          callback(CustomError(`Invalid Type ${mime}, Available Type ${availableMime}`, 400));
+        }
+
+        callback(null, true);
+      },
+      limits: {
+        fileSize: limitFileSize,
+      },
+    });
+
+    return result;
   }
 
   static async compressImage() {}

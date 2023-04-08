@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 
 import { GroupService } from '../services/group/group.services';
+import { PATH_ACTUAL_GROUP_IMAGE_PROFILE, PATH_TEMPORARY_GROUP_IMAGE_PROFILE } from '../utils/constant';
 import { errorHandler } from '../utils/error.helper';
+import { FN } from '../utils/function';
 import { getUserIdFromToken } from '../utils/token.helper';
 
 export class GroupController {
@@ -82,6 +84,36 @@ export class GroupController {
       return res.status(201).send({
         success: true,
         message: 'Private group created successfully',
+        data: groupCreated,
+      });
+    } catch (error) {
+      return errorHandler(error, req, res);
+    }
+  }
+
+  static async createGroupGroup(req: Request, res: Response) {
+    try {
+      const { name, participants } = req.body;
+      const avatar = req.file;
+      const yourId = getUserIdFromToken({ req }) || '';
+
+      const groupCreated = await GroupService.createGroupGroup({
+        creatorId: yourId,
+        name,
+        participants,
+        avatar,
+      });
+
+      /// Upload group avatar to server if avatar is not null
+      if (avatar) {
+        const from = `${PATH_TEMPORARY_GROUP_IMAGE_PROFILE}/${avatar.filename}`;
+        const to = `${PATH_ACTUAL_GROUP_IMAGE_PROFILE}/${groupCreated.avatar}`;
+        FN.moveAndDeleteOldFile(from, to);
+      }
+
+      return res.status(201).send({
+        success: true,
+        message: 'Group group created successfully',
         data: groupCreated,
       });
     } catch (error) {

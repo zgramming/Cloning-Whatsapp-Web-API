@@ -1,8 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 
 import ResponseError from '../../interfaces/response-error.interface';
-import { CODE_PRIVATE_GROUP } from '../../utils/constant';
-import { GroupCreateDTO, GroupPrivateCreateDTO, GroupUpdateDTO, GroupUpdateLastMessageDTO } from './group.dto';
+import { CODE_GROUP_GROUP, CODE_PRIVATE_GROUP } from '../../utils/constant';
+import {
+  GroupCreateDTO,
+  GroupGroupCreateDTO,
+  GroupPrivateCreateDTO,
+  GroupUpdateDTO,
+  GroupUpdateLastMessageDTO,
+} from './group.dto';
 
 const prisma = new PrismaClient();
 export class GroupService {
@@ -145,6 +151,28 @@ export class GroupService {
                 user_id: userId,
               },
             ],
+          },
+        },
+      },
+    });
+
+    return groupCreated;
+  }
+
+  static async createGroupGroup({ creatorId, name, participants, avatar }: GroupGroupCreateDTO) {
+    const code = CODE_GROUP_GROUP(creatorId);
+
+    const groupCreated = await prisma.group.create({
+      data: {
+        name,
+        code,
+        type: 'GROUP',
+        avatar: avatar?.filename || null,
+        group_member: {
+          createMany: {
+            data: participants.map((participant) => ({
+              user_id: participant,
+            })),
           },
         },
       },

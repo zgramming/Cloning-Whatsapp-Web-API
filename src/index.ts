@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { body, param } from 'express-validator';
-import multer from 'multer';
 
 import { AuthController } from './controllers/auth.controller';
 import { ContactController } from './controllers/contact.controller';
@@ -8,32 +7,11 @@ import { GroupController } from './controllers/group.controller';
 import { MessageController } from './controllers/message.controller';
 import { UserController } from './controllers/user.controller';
 import { validateToken } from './middlewares/validate-token.middleware';
-import { PATH_TEMPORARY_AVARTAR, WHITELIST_IMAGE_MIME_TYPE } from './utils/constant';
+import { groupGroupAvatarUpload, userAvatarUpload } from './multer.upload';
 import { CustomError, errorHandler } from './utils/error.helper';
 import { expressValidatorCheck } from './utils/express-validator.helper';
-import { FN } from './utils/function';
 
 const router = Router();
-const avatarUpload = multer({
-  storage: multer.diskStorage({
-    destination: PATH_TEMPORARY_AVARTAR,
-    filename: (req, file, cb) => {
-      cb(null, FN.uniqueFilename(file));
-    },
-  }),
-  fileFilter(req, file, callback) {
-    const mime = file.mimetype;
-    if (!WHITELIST_IMAGE_MIME_TYPE.includes(mime)) {
-      const availableMime = WHITELIST_IMAGE_MIME_TYPE.join(', ');
-      callback(CustomError(`Invalid Type ${mime}, Available Type ${availableMime}`, 400));
-    }
-
-    callback(null, true);
-  },
-  limits: {
-    fileSize: FN.maxSizeInMB(1),
-  },
-});
 
 router.get('/', (req, res) => res.send('Express + TypeScript Server'));
 
@@ -76,7 +54,7 @@ router.put(
   '/user/picture',
   validateToken,
   (req, res, next) => {
-    avatarUpload.single('avatar')(req, res, (err) => {
+    userAvatarUpload.single('avatar')(req, res, (err) => {
       const file = req.file;
       if (err) return errorHandler(err, req, res);
 
@@ -107,6 +85,24 @@ router.post(
   body('userId').isUUID(),
   expressValidatorCheck,
   GroupController.createPrivateGroup,
+);
+router.post(
+  '/group/group',
+  validateToken,
+  async (req, res, next) => {
+    groupGroupAvatarUpload.single('avatar')(req, res, (err) => {
+      if (err) return errorHandler(err, req, res);
+      next();
+    });
+  },
+  body('name').isString(),
+  body('participants')
+    .isArray({
+      min: 2,
+    })
+    .withMessage('Participants must be an array of UUIDs'),
+  expressValidatorCheck,
+  GroupController.createGroupGroup,
 );
 router.post(
   '/group',
