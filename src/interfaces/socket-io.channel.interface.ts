@@ -1,5 +1,5 @@
-import { Socket } from "socket.io";
+import { Socket } from 'socket.io';
 
 export interface SocketIOChannelInterface {
-  [userId: string]: Socket | undefined;
+  [userId: string]: Socket;
 }

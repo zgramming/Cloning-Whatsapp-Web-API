@@ -94,13 +94,15 @@ export class GroupController {
   static async createGroupGroup(req: Request, res: Response) {
     try {
       const { name, participants } = req.body;
+
       const avatar = req.file;
       const yourId = getUserIdFromToken({ req }) || '';
 
+      const participantWithMe = [...participants, yourId];
       const groupCreated = await GroupService.createGroupGroup({
         creatorId: yourId,
         name,
-        participants,
+        participants: participantWithMe,
         avatar,
       });
 

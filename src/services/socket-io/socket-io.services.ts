@@ -62,18 +62,21 @@ export class SocketIOService {
           group_id,
         },
       });
+
       const groupMemberUserIds = groupMember.map((member) => member.user_id);
+
+      console.log(`[Socket IO Server]: User ${invited_by} invite new group ${group_id} to user ${groupMemberUserIds}`);
 
       for (const userId of groupMemberUserIds) {
         const channelSocket = channels[userId];
 
         if (channelSocket) {
-          // Join user to group channel
+          // Make invited user join to group channel
           channelSocket.join(group_id);
 
-          // Only emit to inviter user
+          // Send notification to user that invited to group channel if user is not invited by himself
           if (userId !== invited_by) {
-            channelSocket.to(userId).emit(EMIT_EVENT_INVITE_NEW_GROUP, data);
+            socket.to(userId).emit(EMIT_EVENT_INVITE_NEW_GROUP, data);
           }
         }
       }
@@ -126,7 +129,7 @@ export class SocketIOService {
 
   static async onDisconnect(socket: Socket) {
     socket.on('disconnect', () => {
-      console.log('user disconnected');
+      console.log(`[Socket IO Server]: User disconnected`);
     });
   }
 }
