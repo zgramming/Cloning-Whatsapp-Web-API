@@ -98,9 +98,9 @@ router.post(
   body('name').isString(),
   body('participants')
     .isArray({
-      min: 2,
+      min: 1,
     })
-    .withMessage('Participants must be an array of UUIDs'),
+    .withMessage('Participants must be an array of UUIDs and must have at least one participant'),
   expressValidatorCheck,
   GroupController.createGroupGroup,
 );
