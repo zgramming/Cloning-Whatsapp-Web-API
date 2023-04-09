@@ -68,6 +68,7 @@ export class GroupService {
         },
       },
       include: {
+        // TODO:  We have to figure out how to check if the user is already in contact or not
         _count: {
           select: {
             contact: true,
@@ -98,7 +99,8 @@ export class GroupService {
 
     const mapping = groups.map((group) => {
       if (group.type === 'PRIVATE') {
-        const interlocutors = group.group_member[0].user;
+        const isHaveInterlocutors = group.group_member.length > 0;
+        const interlocutors = isHaveInterlocutors ? group.group_member[0].user : null;
         const alreadyOnContact = group._count.contact > 0;
         const result = {
           ...group,

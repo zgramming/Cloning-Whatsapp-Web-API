@@ -24,6 +24,12 @@ enum TypeMessage {
   FILE
 }
 
+enum StatusMessage {
+  PENDING
+  DELIVERED
+  READ
+}
+
 enum StatusUser {
   active
   inactive
@@ -82,18 +88,23 @@ model GroupMember {
 }
 
 model Message {
-  id         String      @id @default(uuid())
-  group_id   String
-  from       String
-  message    String      @db.Text
-  type       TypeMessage
-  created_at DateTime    @default(now())
-  updated_at DateTime    @updatedAt
-  deleted_at DateTime?
-  deleted_by String?
+  id                 String        @id @default(uuid())
+  // To Accomodir Message Reply in the future
+  message_replied_id String?
+  group_id           String
+  from               String
+  message            String        @db.Text
+  type               TypeMessage
+  status             StatusMessage @default(PENDING)
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
+  deleted_at         DateTime?
+  deleted_by         String?
 
-  group    Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
-  fromUser User  @relation(fields: [from], references: [id], onDelete: Cascade)
+  group                Group     @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  fromUser             User      @relation(fields: [from], references: [id], onDelete: Cascade)
+  messageRepliedParent Message?  @relation(name: "MessageReplied", fields: [message_replied_id], references: [id], onDelete: Cascade)
+  messageRepliedChild  Message[] @relation(name: "MessageReplied")
 
   @@map("message")
 }
