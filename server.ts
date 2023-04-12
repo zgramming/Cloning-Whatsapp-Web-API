@@ -39,7 +39,7 @@ io.on('connection', (socket) => {
   SocketIOService.onConnect(socket);
 
   /// Listen new group chat event
-  SocketIOService.onInviteNewGroup(socket);
+  SocketIOService.onInviteNewConversation(socket);
 
   /// Listen typing chat event
   SocketIOService.onTypingMessage(socket);

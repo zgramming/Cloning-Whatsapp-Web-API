@@ -1,24 +1,25 @@
 import { PrismaClient } from '@prisma/client';
 
 import ResponseError from '../../interfaces/response-error.interface';
-import { CODE_GROUP_GROUP, CODE_PRIVATE_GROUP } from '../../utils/constant';
+import { CODE_GROUP_CONVERSATION, CODE_PRIVATE_CONVERSATION } from '../../utils/constant';
 import {
-  GroupCreateDTO,
-  GroupGroupCreateDTO,
-  GroupPrivateCreateDTO,
-  GroupUpdateDTO,
-  GroupUpdateLastMessageDTO,
-} from './group.dto';
+  ConversationCreateDTO,
+  ConversationGroupCreateDTO,
+  ConversationPrivateCreateDTO,
+  ConversationUpdateDTO,
+  ConversationUpdateLastMessageDTO,
+} from './conversation.dto';
 
 const prisma = new PrismaClient();
-export class GroupService {
-  static async getGroupById(id: string) {
-    const group = await prisma.group.findUniqueOrThrow({
+
+export class ConversationService {
+  static async getById(id: string) {
+    const conversation = await prisma.conversation.findUniqueOrThrow({
       where: {
         id,
       },
       include: {
-        group_member: {
+        participants: {
           select: {
             user_id: true,
             user: {
@@ -39,29 +40,29 @@ export class GroupService {
       },
     });
 
-    return group;
+    return conversation;
   }
 
-  static async getGroupByCode(code: string) {
-    const group = await prisma.group.findUnique({
+  static async getByCode(code: string) {
+    const conversation = await prisma.conversation.findUnique({
       where: {
         code,
       },
     });
-    return group;
+    return conversation;
   }
 
-  static async getMyGroups(userId: string) {
+  static async getMyConversations(userId: string) {
     // With this function, we accomodir to fetch private, public, and group chat
     // To accomodir private / public group, we just need to get 1 member of group
     // To accomodate group chat, we need last sender with relation to user
 
-    const groups = await prisma.group.findMany({
+    const conversations = await prisma.conversation.findMany({
       where: {
         last_msg: {
           not: null,
         },
-        group_member: {
+        participants: {
           some: {
             user_id: userId,
           },
@@ -74,7 +75,7 @@ export class GroupService {
             contact: true,
           },
         },
-        group_member: {
+        participants: {
           /// We don't need to get all members, just get 1 member to accomodate private / public group
           take: 1,
           where: {
@@ -97,13 +98,13 @@ export class GroupService {
       },
     });
 
-    const mapping = groups.map((group) => {
-      if (group.type === 'PRIVATE') {
-        const isHaveInterlocutors = group.group_member.length > 0;
-        const interlocutors = isHaveInterlocutors ? group.group_member[0].user : null;
-        const alreadyOnContact = group._count.contact > 0;
+    const mapping = conversations.map((conversation) => {
+      if (conversation.type === 'PRIVATE') {
+        const isHaveInterlocutors = conversation.participants.length > 0;
+        const interlocutors = isHaveInterlocutors ? conversation.participants[0].user : null;
+        const alreadyOnContact = conversation._count.contact > 0;
         const result = {
-          ...group,
+          ...conversation,
           interlocutors: {
             ...interlocutors,
             already_on_contact: alreadyOnContact,
@@ -113,37 +114,37 @@ export class GroupService {
         return result;
       }
 
-      return group;
+      return conversation;
     });
 
     return mapping;
   }
 
-  static async createPrivateGroup({ userId, yourId }: GroupPrivateCreateDTO) {
+  static async createPrivateConversation({ userId, yourId }: ConversationPrivateCreateDTO) {
     /// If group id is not exists, create new group
     const name = `Private Group ${yourId}_${userId}`;
-    const code = CODE_PRIVATE_GROUP({ yourId, userId });
-    const alternativeCode = CODE_PRIVATE_GROUP({ yourId: userId, userId: yourId });
+    const code = CODE_PRIVATE_CONVERSATION({ yourId, userId });
+    const alternativeCode = CODE_PRIVATE_CONVERSATION({ yourId: userId, userId: yourId });
 
-    const groupIsExist = await prisma.group.findFirst({
+    const isExists = await prisma.conversation.findFirst({
       where: {
         OR: [{ code }, { code: alternativeCode }],
       },
     });
 
-    if (groupIsExist) {
-      const error = new Error('Group is already exist') as ResponseError;
+    if (isExists) {
+      const error = new Error('Conversation is already exist') as ResponseError;
       error.status = 400;
       throw error;
     }
 
     // Create group with members (yourId, userId) and return group
-    const groupCreated = await prisma.group.create({
+    const result = await prisma.conversation.create({
       data: {
         name,
         code,
         type: 'PRIVATE',
-        group_member: {
+        participants: {
           createMany: {
             data: [
               {
@@ -158,19 +159,19 @@ export class GroupService {
       },
     });
 
-    return groupCreated;
+    return result;
   }
 
-  static async createGroupGroup({ creatorId, name, participants, avatar }: GroupGroupCreateDTO) {
-    const code = CODE_GROUP_GROUP(creatorId);
+  static async createGroupConversation({ creatorId, name, participants, avatar }: ConversationGroupCreateDTO) {
+    const code = CODE_GROUP_CONVERSATION(creatorId);
 
-    const groupCreated = await prisma.group.create({
+    const result = await prisma.conversation.create({
       data: {
         name,
         code,
         type: 'GROUP',
         avatar: avatar?.filename || null,
-        group_member: {
+        participants: {
           createMany: {
             data: participants.map((participant) => ({
               user_id: participant,
@@ -180,25 +181,13 @@ export class GroupService {
       },
     });
 
-    return groupCreated;
+    return result;
   }
 
-  static async createGroup(group: GroupCreateDTO) {
-    const groupCreated = await prisma.group.create({
-      data: {
-        name: group.name,
-        code: group.code,
-        avatar: group.avatar,
-        type: group.type,
-      },
-    });
-    return groupCreated;
-  }
-
-  static async updateLastMessage({ groupId, last_sender, message }: GroupUpdateLastMessageDTO) {
-    const groupUpdated = await prisma.group.update({
+  static async updateLastMessage({ conversation_id, last_sender, message }: ConversationUpdateLastMessageDTO) {
+    const result = await prisma.conversation.update({
       where: {
-        id: groupId,
+        id: conversation_id,
       },
       data: {
         last_msg: message,
@@ -206,37 +195,37 @@ export class GroupService {
       },
     });
 
-    return groupUpdated;
+    return result;
   }
 
-  static async updateGroup(id: string, group: GroupUpdateDTO) {
-    const prevGroup = await prisma.group.findUniqueOrThrow({
+  static async update(id: string, { name, avatar }: ConversationUpdateDTO) {
+    const conversation = await prisma.conversation.findUniqueOrThrow({
       where: {
         id,
       },
     });
 
-    const groupUpdated = await prisma.group.update({
+    const result = await prisma.conversation.update({
       where: {
         id,
       },
       data: {
-        name: group.name,
-        avatar: group.avatar,
-        code: prevGroup.code,
-        type: prevGroup.type,
+        name: name,
+        avatar: avatar,
+        code: conversation.code,
+        type: conversation.type,
       },
     });
 
-    return groupUpdated;
+    return result;
   }
 
-  static async deleteGroup(id: string) {
-    const groupDeleted = await prisma.group.delete({
+  static async delete(id: string) {
+    const result = await prisma.conversation.delete({
       where: {
         id,
       },
     });
-    return groupDeleted;
+    return result;
   }
 }

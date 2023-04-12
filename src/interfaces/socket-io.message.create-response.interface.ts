@@ -6,12 +6,14 @@ export interface SocketIOMessageCreateResponseInterface {
 
 export interface SocketIOMessageCreateResponse {
   id: string;
-  group_id: string;
+  message_replied_id?: string;
+  conversation_id: string;
   from: string;
   message: string;
-  type: string;
+  type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'AUDIO';
+  status: 'PENDING' | 'DELIVERED' | 'READ';
   created_at: Date;
   updated_at: Date;
   deleted_at?: Date;
-  deleted_by?: string;
+  deleted_by?: Date;
 }

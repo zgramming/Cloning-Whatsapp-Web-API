@@ -15,9 +15,9 @@ export class ContactController {
   }
 
   static async createContact(req: Request, res: Response) {
-    const { group_id, user_id } = req.body;
+    const { conversation_id, user_id } = req.body;
     const ownerId = getUserIdFromToken({ req }) || '';
-    const contact = await ContactService.createContact({ owner_id: ownerId, group_id, user_id });
+    const contact = await ContactService.createContact({ owner_id: ownerId, conversation_id, user_id });
     return res.status(201).json({
       status: true,
       message: 'Contact created successfully',

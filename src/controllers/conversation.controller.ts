@@ -1,20 +1,20 @@
 import { Request, Response } from 'express';
 
-import { GroupService } from '../services/group/group.services';
 import { PATH_ACTUAL_GROUP_IMAGE_PROFILE, PATH_TEMPORARY_GROUP_IMAGE_PROFILE } from '../utils/constant';
 import { errorHandler } from '../utils/error.helper';
 import { FN } from '../utils/function';
 import { getUserIdFromToken } from '../utils/token.helper';
+import { ConversationService } from '../services/conversation/conversation.services';
 
-export class GroupController {
-  static async getGroupById(req: Request, res: Response) {
+export class ConversationController {
+  static async getById(req: Request, res: Response) {
     const id = req.params.id;
     const userId = getUserIdFromToken({ req }) || '';
 
-    const group = await GroupService.getGroupById(id);
+    const conversation = await ConversationService.getById(id);
 
-    if (group.type === 'PRIVATE') {
-      const interlocutors = group.group_member.find((member) => member.user_id !== userId);
+    if (conversation.type === 'PRIVATE') {
+      const interlocutors = conversation.participants.find((participant) => participant.user_id !== userId);
 
       if (!interlocutors) {
         return res.status(404).send({
@@ -26,9 +26,9 @@ export class GroupController {
 
       return res.status(200).send({
         status: true,
-        message: 'Group found successfully',
+        message: 'Conversation found successfully',
         data: {
-          ...group,
+          ...conversation,
           interlocutors,
         },
       });
@@ -36,62 +36,53 @@ export class GroupController {
 
     return res.status(200).send({
       status: true,
-      message: 'Group found successfully',
-      data: group,
+      message: 'Conversation found successfully',
+      data: conversation,
     });
   }
 
-  static async getGroupByCode(req: Request, res: Response) {
+  static async getByCode(req: Request, res: Response) {
     const code = req.params.code;
-    const group = await GroupService.getGroupByCode(code);
+    const result = await ConversationService.getByCode(code);
     return res.status(200).send({
       status: true,
-      message: 'Group found successfully',
-      data: group,
+      message: 'Conversation found successfully',
+      data: result,
     });
   }
 
-  static async getMyGroups(req: Request, res: Response) {
+  static async getMyConversations(req: Request, res: Response) {
     const userId = getUserIdFromToken({ req }) || '';
-    const groups = await GroupService.getMyGroups(userId);
+    const result = await ConversationService.getMyConversations(userId);
 
     return res.status(200).send({
       status: true,
-      message: 'Groups found successfully',
-      data: groups,
+      message: 'Conversations found successfully',
+      data: result,
     });
   }
 
-  static async createGroup(req: Request, res: Response) {
-    const group = req.body;
-    const groupCreated = await GroupService.createGroup(group);
-    return res.status(201).send({
-      status: true,
-      message: 'Group created successfully',
-      data: groupCreated,
-    });
-  }
-
-  static async createPrivateGroup(req: Request, res: Response) {
+  static async createPrivateConversation(req: Request, res: Response) {
     try {
       const { userId } = req.body;
       const yourId = getUserIdFromToken({ req }) || '';
 
-      const groupCreated = await GroupService.createPrivateGroup({
+      const result = await ConversationService.createPrivateConversation({
         userId,
         yourId,
       });
+
       return res.status(201).send({
         success: true,
         message: 'Private group created successfully',
-        data: groupCreated,
+        data: result,
       });
     } catch (error) {
       return errorHandler(error, req, res);
     }
   }
 
-  static async createGroupGroup(req: Request, res: Response) {
+  static async createGroupConversation(req: Request, res: Response) {
     try {
       const { name, participants } = req.body;
 
@@ -99,7 +90,7 @@ export class GroupController {
       const yourId = getUserIdFromToken({ req }) || '';
 
       const participantWithMe = [...participants, yourId];
-      const groupCreated = await GroupService.createGroupGroup({
+      const result = await ConversationService.createGroupConversation({
         creatorId: yourId,
         name,
         participants: participantWithMe,
@@ -109,38 +100,41 @@ export class GroupController {
       /// Upload group avatar to server if avatar is not null
       if (avatar) {
         const from = `${PATH_TEMPORARY_GROUP_IMAGE_PROFILE}/${avatar.filename}`;
-        const to = `${PATH_ACTUAL_GROUP_IMAGE_PROFILE}/${groupCreated.avatar}`;
+        const to = `${PATH_ACTUAL_GROUP_IMAGE_PROFILE}/${result.avatar}`;
         FN.moveAndDeleteOldFile(from, to);
       }
 
       return res.status(201).send({
         success: true,
-        message: 'Group group created successfully',
-        data: groupCreated,
+        message: 'Group conversation created successfully',
+        data: result,
       });
     } catch (error) {
       return errorHandler(error, req, res);
     }
   }
 
-  static async updateGroup(req: Request, res: Response) {
+  static async update(req: Request, res: Response) {
     const id = req.params.id;
-    const group = req.body;
-    const groupUpdated = await GroupService.updateGroup(id, group);
+    const { name, avatar } = req.body;
+    const result = await ConversationService.update(id, {
+      name,
+      avatar,
+    });
     return res.status(200).send({
       status: true,
       message: 'Group updated successfully',
-      data: groupUpdated,
+      data: result,
     });
   }
 
-  static async deleteGroup(req: Request, res: Response) {
+  static async delete(req: Request, res: Response) {
     const id = req.params.id;
-    const groupDeleted = await GroupService.deleteGroup(id);
+    const result = await ConversationService.delete(id);
     return res.status(200).send({
       status: true,
       message: 'Group deleted successfully',
-      data: groupDeleted,
+      data: result,
     });
   }
 }

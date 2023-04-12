@@ -5,11 +5,11 @@ import { errorHandler } from '../utils/error.helper';
 import { getUserIdFromToken } from '../utils/token.helper';
 
 export class MessageController {
-  static async getMessagesByGroupId(req: Request, res: Response) {
+  static async getByConversationId(req: Request, res: Response) {
     try {
-      const { groupId } = req.params;
+      const { conversation_id } = req.params;
 
-      const messages = await MessageService.getByGroupId(groupId);
+      const messages = await MessageService.getByConversationId(conversation_id);
 
       return res.status(200).json({
         success: true,
@@ -23,13 +23,13 @@ export class MessageController {
 
   static async createMessage(req: Request, res: Response) {
     try {
-      const { group_id, message, type } = req.body;
+      const { conversation_id, message, type } = req.body;
 
       const from = getUserIdFromToken({ req }) || '';
 
       const messageCreated = await MessageService.create({
         from,
-        group_id,
+        conversation_id,
         message,
         type,
       });

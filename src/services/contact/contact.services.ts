@@ -26,11 +26,11 @@ export class ContactService {
     return contacts;
   }
 
-  static async createContact({ owner_id, group_id, user_id }: ContactCreateDTO) {
+  static async createContact({ owner_id, conversation_id, user_id }: ContactCreateDTO) {
     const result = await prisma.contact.create({
       data: {
         owner_id,
-        group_id,
+        conversation_id,
         user_id,
       },
     });
