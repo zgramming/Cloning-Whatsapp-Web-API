@@ -4,10 +4,10 @@ import { MessageCreateDTO } from './message.dto';
 const prisma = new PrismaClient();
 
 export class MessageService {
-  static async getByGroupId(groupId: string) {
+  static async getByConversationId(conversation_id: string) {
     const messages = await prisma.message.findMany({
       where: {
-        group_id: groupId,
+        conversation_id,
       },
       orderBy: {
         created_at: 'desc',
@@ -17,12 +17,12 @@ export class MessageService {
     return messages;
   }
 
-  static async create({ from, group_id, message, type }: MessageCreateDTO) {
+  static async create({ from, conversation_id, message, type }: MessageCreateDTO) {
     const transaction = await prisma.$transaction(async (trx) => {
       // Update last message and last sender
-      await trx.group.update({
+      await trx.conversation.update({
         where: {
-          id: group_id,
+          id: conversation_id,
         },
         data: {
           last_msg: message,
@@ -35,7 +35,7 @@ export class MessageService {
       const messageCreated = await trx.message.create({
         data: {
           from,
-          group_id,
+          conversation_id,
           message,
           type,
         },

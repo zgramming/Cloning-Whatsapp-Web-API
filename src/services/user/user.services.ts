@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 
 import ResponseError from '../../interfaces/response-error.interface';
 import { UserCreateDTO, UserUpdateDTO } from './user.dto';
-import { CODE_PRIVATE_GROUP } from '../../utils/constant';
+import { CODE_PRIVATE_CONVERSATION } from '../../utils/constant';
 
 const saltRounds = 10;
 const prisma = new PrismaClient();
@@ -15,12 +15,13 @@ export class UserService {
     return result;
   }
 
-  static async getUserById(id: string) {
+  static async me(id: string) {
     const result = await prisma.user.findUniqueOrThrow({
       where: {
         id,
       },
     });
+    
     return result;
   }
 
@@ -39,17 +40,17 @@ export class UserService {
       },
     });
 
-    const userAlreadyInMyGroup = await prisma.group.findFirst({
+    const userAlreadyInConversation = await prisma.conversation.findFirst({
       where: {
         OR: [
           {
-            code: CODE_PRIVATE_GROUP({
+            code: CODE_PRIVATE_CONVERSATION({
               yourId: userId,
               userId: result.id,
             }),
           },
           {
-            code: CODE_PRIVATE_GROUP({
+            code: CODE_PRIVATE_CONVERSATION({
               yourId: result.id,
               userId,
             }),
@@ -60,7 +61,7 @@ export class UserService {
 
     return {
       result,
-      userAlreadyInMyGroup,
+      userAlreadyInConversation,
     };
   }
 

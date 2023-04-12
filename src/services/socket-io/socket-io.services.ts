@@ -3,16 +3,16 @@ import { Socket } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 
 import { SocketIOChannelInterface } from '../../interfaces/socket-io.channel.interface';
-import { SocketIOGroupInviteInterface } from '../../interfaces/socket-io.group.invite.interface';
 import { SocketIOMessageCreateResponseInterface } from '../../interfaces/socket-io.message.create-response.interface';
 import { SocketIOMessageTypingInterface } from '../../interfaces/socket-io.message.typing.interface';
 import {
   EMIT_EVENT_CONNECT,
   EMIT_EVENT_CUSTOM_DISCONNECT,
-  EMIT_EVENT_INVITE_NEW_GROUP,
+  EMIT_EVENT_INVITE_NEW_CONVERSATION,
   EMIT_EVENT_SEND_MESSAGE,
   EMIT_EVENT_TYPING,
 } from '../../utils/constant';
+import { SocketIOInviteConversationInterface } from '../../interfaces/socket-io.group.invite.interface';
 
 const prisma = new PrismaClient();
 
@@ -27,56 +27,54 @@ export class SocketIOService {
 
         channels[userId] = socket;
 
-        /// Join own group
+        /// Join own conversation
         socket.join(userId);
 
-        /// If have group, join to group
-        const groups = await prisma.groupMember.findMany({
+        /// If have conversation, join to conversation
+        const conversations = await prisma.conversationParticipant.findMany({
           select: {
-            group_id: true,
+            conversation_id: true,
           },
           where: { user_id: userId },
         });
 
-        if (groups.length === 0) {
-          console.log(`[Socket IO Server]: User ${userId} connected and not join to any group`);
+        if (conversations.length === 0) {
+          console.log(`[Socket IO Server]: User ${userId} connected and join to own conversation`);
           return;
         }
 
-        const idsGroup = groups.map((group) => group.group_id);
+        const idsConversation = conversations.map((conversation) => conversation.conversation_id);
 
-        console.log(`[Socket IO Server]: User ${userId} connected and join to group ${idsGroup}`);
+        console.log(`[Socket IO Server]: User ${userId} connected and join to group ${idsConversation}`);
 
-        socket.join(idsGroup);
+        socket.join(idsConversation);
       }
     });
   }
 
-  static async onInviteNewGroup(socket: Socket) {
-    socket.on(EMIT_EVENT_INVITE_NEW_GROUP, async (data: SocketIOGroupInviteInterface) => {
-      const { group_id, invited_by } = data;
+  static async onInviteNewConversation(socket: Socket) {
+    socket.on(EMIT_EVENT_INVITE_NEW_CONVERSATION, async (data: SocketIOInviteConversationInterface) => {
+      const { conversation_id, invited_by } = data;
 
-      const groupMember = await prisma.groupMember.findMany({
+      const participants = await prisma.conversationParticipant.findMany({
         select: { user_id: true },
         where: {
-          group_id,
+          conversation_id,
         },
       });
 
-      const groupMemberUserIds = groupMember.map((member) => member.user_id);
+      const participantsUserId = participants.map((participant) => participant.user_id);
 
-      console.log(`[Socket IO Server]: User ${invited_by} invite new group ${group_id} to user ${groupMemberUserIds}`);
-
-      for (const userId of groupMemberUserIds) {
+      for (const userId of participantsUserId) {
         const channelSocket = channels[userId];
 
         if (channelSocket) {
-          // Make invited user join to group channel
-          channelSocket.join(group_id);
+          // Join to conversation channel
+          channelSocket.join(conversation_id);
 
-          // Send notification to user that invited to group channel if user is not invited by himself
+          // Send notification to user invited by other user in conversation channel (except user invited by)
           if (userId !== invited_by) {
-            socket.to(userId).emit(EMIT_EVENT_INVITE_NEW_GROUP, data);
+            socket.to(userId).emit(EMIT_EVENT_INVITE_NEW_CONVERSATION, data);
           }
         }
       }
@@ -85,40 +83,42 @@ export class SocketIOService {
 
   static async onTypingMessage(socket: Socket) {
     socket.on(EMIT_EVENT_TYPING, (data: SocketIOMessageTypingInterface) => {
-      const { name, group_id, is_typing } = data;
+      const { name, conversation_id, is_typing } = data;
       const isTyping = is_typing ? 'is typing...' : 'stop typing...';
-      console.log(`[Socket IO Server]: User ${name} ${isTyping} in group ${group_id} ...`);
 
-      socket.broadcast.to(group_id).emit(EMIT_EVENT_TYPING, data);
+      console.log(`[Socket IO Server]: User ${name} ${isTyping} in conversation ${conversation_id}`);
+
+      socket.broadcast.to(conversation_id).emit(EMIT_EVENT_TYPING, data);
     });
   }
 
   static async onSendingMessage(socket: Socket) {
     socket.on(EMIT_EVENT_SEND_MESSAGE, (data: SocketIOMessageCreateResponseInterface) => {
       const { data: dataResponse } = data;
-      const { group_id, from } = dataResponse;
 
-      console.log(`[Socket IO Server]: User ${from} send message to group ${group_id}`);
+      const { conversation_id, from } = dataResponse;
 
-      socket.broadcast.to(group_id).emit(EMIT_EVENT_SEND_MESSAGE, data);
+      console.log(`[Socket IO Server]: User ${from} send message to conversation ${conversation_id}`);
+
+      socket.broadcast.to(conversation_id).emit(EMIT_EVENT_SEND_MESSAGE, data);
     });
   }
 
   static async onCustomDisconnect(socket: Socket) {
     socket.on(EMIT_EVENT_CUSTOM_DISCONNECT, async (userId) => {
       if (userId) {
-        const groups = await prisma.groupMember.findMany({
+        const conversations = await prisma.conversationParticipant.findMany({
           select: {
-            group_id: true,
+            conversation_id: true,
           },
           where: { user_id: userId },
         });
 
-        const idsGroup = groups.map((group) => group.group_id);
+        const idsConversation = conversations.map((conversation) => conversation.conversation_id);
 
         console.log(`[Socket IO Server]: User ${userId} disconnected`);
 
-        idsGroup.forEach((id) => {
+        idsConversation.forEach((id) => {
           socket.leave(id);
 
           console.log(`[Socket IO Server]: User ${userId} leave group ${id}`);

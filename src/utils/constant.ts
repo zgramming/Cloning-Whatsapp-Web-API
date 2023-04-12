@@ -1,8 +1,8 @@
-export const CODE_PRIVATE_GROUP = ({ yourId, userId }: { yourId: string; userId: string }) => {
+export const CODE_PRIVATE_CONVERSATION = ({ yourId, userId }: { yourId: string; userId: string }) => {
   return `PRIVATE_${yourId}_${userId}`;
 };
 
-export const CODE_GROUP_GROUP = (creatorId: string) => {
+export const CODE_GROUP_CONVERSATION = (creatorId: string) => {
   const randomString = Math.round(Math.random() * 1e9);
   const date = new Date();
   const dateFormat = date.toLocaleDateString('id-ID', {
@@ -23,7 +23,7 @@ export const EMIT_EVENT_DISCONNECT = 'disconnect';
 export const EMIT_EVENT_CUSTOM_DISCONNECT = 'custom_disconnected';
 export const EMIT_EVENT_TYPING = 'typing';
 export const EMIT_EVENT_SEND_MESSAGE = 'send_message';
-export const EMIT_EVENT_INVITE_NEW_GROUP = 'invite_new_group';
+export const EMIT_EVENT_INVITE_NEW_CONVERSATION = 'invite_new_conversation';
 
 // Path Upload
 const PATH_TEMPORARY = './public/temporary';

@@ -11,10 +11,10 @@ const userAvatarUpload = FN.multerUploadConfig({
   config: { whitelistMimeType: WHITELIST_IMAGE_MIME_TYPE },
 });
 
-const groupGroupAvatarUpload = FN.multerUploadConfig({
+const conversationGroupAvatarUpload = FN.multerUploadConfig({
   destination: PATH_TEMPORARY_GROUP_IMAGE_PROFILE,
   limitFileSize: FN.maxSizeInMB(1),
   config: { whitelistMimeType: WHITELIST_IMAGE_MIME_TYPE },
 });
 
-export { userAvatarUpload, groupGroupAvatarUpload };
+export { userAvatarUpload, conversationGroupAvatarUpload };

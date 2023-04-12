@@ -10,7 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum GroupType {
+enum ConversationType {
   PRIVATE
   PUBLIC
   GROUP
@@ -36,62 +36,64 @@ enum StatusUser {
 }
 
 model Contact {
-  id         String   @id @default(uuid())
-  owner_id   String
-  user_id    String
-  group_id   String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id              String   @id @default(uuid())
+  owner_id        String
+  user_id         String
+  conversation_id String
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
-  owner User  @relation(name: "OwnerContact", fields: [owner_id], references: [id], onDelete: Cascade)
-  user  User  @relation(name: "UserContact", fields: [user_id], references: [id], onDelete: Cascade)
-  group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  owner        User         @relation(name: "OwnerContact", fields: [owner_id], references: [id], onDelete: Cascade)
+  user         User         @relation(name: "UserContact", fields: [user_id], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
 
   @@unique([owner_id, user_id])
   @@map("contact")
 }
 
-model Group {
-  id          String    @id @default(uuid())
+model Conversation {
+  id          String           @id @default(uuid())
   name        String
-  code        String    @unique @db.VarChar(255)
-  type        GroupType
+  code        String           @unique @db.VarChar(255)
+  type        ConversationType
   avatar      String?
   last_msg    String?
   last_sender String? // FK
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
 
-  group_member GroupMember[]
+  participants ConversationParticipant[]
   messages     Message[]
 
   sender  User?     @relation(fields: [last_sender], references: [id], onDelete: Cascade)
   contact Contact[]
 
-  @@map("group")
+  @@map("conversation")
 }
 
-model GroupMember {
-  id         String    @id @default(uuid())
-  group_id   String
-  user_id    String
-  join_at    DateTime  @default(now())
-  leave_at   DateTime?
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
+model ConversationParticipant {
+  id              String    @id @default(uuid())
+  conversation_id String
+  user_id         String
+  join_at         DateTime  @default(now())
+  leave_at        DateTime?
+  is_pinned       Boolean   @default(false)
+  is_archived     Boolean   @default(false)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
 
-  group Group @relation(fields: [group_id], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([group_id, user_id])
-  @@map("group_member")
+  @@unique([conversation_id, user_id])
+  @@map("conversation_participant")
 }
 
 model Message {
   id                 String        @id @default(uuid())
   // To Accomodir Message Reply in the future
   message_replied_id String?
-  group_id           String
+  conversation_id    String
   from               String
   message            String        @db.Text
   type               TypeMessage
@@ -101,29 +103,29 @@ model Message {
   deleted_at         DateTime?
   deleted_by         String?
 
-  group                Group     @relation(fields: [group_id], references: [id], onDelete: Cascade)
-  fromUser             User      @relation(fields: [from], references: [id], onDelete: Cascade)
-  messageRepliedParent Message?  @relation(name: "MessageReplied", fields: [message_replied_id], references: [id], onDelete: Cascade)
-  messageRepliedChild  Message[] @relation(name: "MessageReplied")
+  conversation           Conversation @relation(fields: [conversation_id], references: [id], onDelete: Cascade)
+  fromUser               User         @relation(fields: [from], references: [id], onDelete: Cascade)
+  message_replied_parent Message?     @relation(name: "MessageReplied", fields: [message_replied_id], references: [id], onDelete: Cascade)
+  message_replied_child  Message[]    @relation(name: "MessageReplied")
 
   @@map("message")
 }
 
 model User {
-  id            String        @id @default(uuid())
-  name          String
-  phone         String        @unique
-  password      String
-  avatar        String?
-  bio           String?
-  status        StatusUser    @default(active)
-  created_at    DateTime      @default(now())
-  updated_at    DateTime      @updatedAt
-  group_member  GroupMember[]
-  message       Message[]
-  group         Group[]
-  contact_owner Contact[]     @relation(name: "OwnerContact")
-  contact_user  Contact[]     @relation(name: "UserContact")
+  id                        String                    @id @default(uuid())
+  name                      String
+  phone                     String                    @unique
+  password                  String
+  avatar                    String?
+  bio                       String?
+  status                    StatusUser                @default(active)
+  created_at                DateTime                  @default(now())
+  updated_at                DateTime                  @updatedAt
+  message                   Message[]
+  contact_owner             Contact[]                 @relation(name: "OwnerContact")
+  contact_user              Contact[]                 @relation(name: "UserContact")
+  conversation              Conversation[]
+  conversation_participants ConversationParticipant[]
 
   @@map("user")
 }

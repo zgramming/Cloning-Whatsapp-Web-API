@@ -8,14 +8,19 @@ import { FN } from '../utils/function';
 import { getUserIdFromToken } from '../utils/token.helper';
 
 export class UserController {
-  static async getUser(req: Request, res: Response) {
-    const result = await UserService.getUserById(req.params.id);
+  static async me(req: Request, res: Response) {
+    try {
+      const id = getUserIdFromToken({ req }) || '';
+      const result = await UserService.me(id);
 
-    return res.status(200).json({
-      message: 'User',
-      success: true,
-      data: result,
-    });
+      return res.status(200).json({
+        message: 'User',
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      return errorHandler(error, req, res);
+    }
   }
 
   static async getAllUsers(req: Request, res: Response) {
@@ -32,7 +37,7 @@ export class UserController {
     try {
       const { phone } = req.params;
       const userId = getUserIdFromToken({ req }) || '';
-      const { result, userAlreadyInMyGroup } = await UserService.getUserByPhone({
+      const { result, userAlreadyInConversation } = await UserService.getUserByPhone({
         phone,
         userId,
       });
@@ -41,7 +46,7 @@ export class UserController {
         message: 'User',
         success: true,
         data: result,
-        group: userAlreadyInMyGroup,
+        conversation: userAlreadyInConversation,
       });
     } catch (error) {
       return errorHandler(error, req, res);
@@ -84,7 +89,7 @@ export class UserController {
   static async updatePicture(req: Request, res: Response) {
     try {
       const id = getUserIdFromToken({ req }) || '';
-      const user = await UserService.getUserById(id);
+      const user = await UserService.me(id);
       const avatar = req.file;
 
       if (!avatar) {

@@ -3,11 +3,11 @@ import { body, param } from 'express-validator';
 
 import { AuthController } from './controllers/auth.controller';
 import { ContactController } from './controllers/contact.controller';
-import { GroupController } from './controllers/group.controller';
+import { ConversationController } from './controllers/conversation.controller';
 import { MessageController } from './controllers/message.controller';
 import { UserController } from './controllers/user.controller';
 import { validateToken } from './middlewares/validate-token.middleware';
-import { groupGroupAvatarUpload, userAvatarUpload } from './multer.upload';
+import { conversationGroupAvatarUpload, userAvatarUpload } from './multer.upload';
 import { CustomError, errorHandler } from './utils/error.helper';
 import { expressValidatorCheck } from './utils/express-validator.helper';
 
@@ -24,9 +24,8 @@ router.post(
 );
 
 // User routes
-
 router.get('/user', UserController.getAllUsers);
-router.get('/user/:id', param('id').isUUID(), expressValidatorCheck, UserController.getUser);
+router.get('/user/me', validateToken, UserController.me);
 router.get(
   '/user/phone/:phone',
   param('phone').isString(),
@@ -68,29 +67,35 @@ router.put(
 );
 router.delete('/user/:id', validateToken, UserController.deleteUser);
 
-// Group routes
+// Conversation routes
 
-router.get('/group/me', validateToken, GroupController.getMyGroups);
-router.get('/group/:id', validateToken, param('id').isUUID(), expressValidatorCheck, GroupController.getGroupById);
+router.get('/conversation/me', validateToken, ConversationController.getMyConversations);
 router.get(
-  '/group/code/:code',
+  '/conversation/:id',
+  validateToken,
+  param('id').isUUID(),
+  expressValidatorCheck,
+  ConversationController.getById,
+);
+router.get(
+  '/conversation/code/:code',
   validateToken,
   param('code').isString(),
   expressValidatorCheck,
-  GroupController.getGroupByCode,
+  ConversationController.getByCode,
 );
 router.post(
-  '/group/private',
+  '/conversation/private',
   validateToken,
   body('userId').isUUID(),
   expressValidatorCheck,
-  GroupController.createPrivateGroup,
+  ConversationController.createPrivateConversation,
 );
 router.post(
-  '/group/group',
+  '/conversation/group',
   validateToken,
   async (req, res, next) => {
-    groupGroupAvatarUpload.single('avatar')(req, res, (err) => {
+    conversationGroupAvatarUpload.single('avatar')(req, res, (err) => {
       if (err) return errorHandler(err, req, res);
       next();
     });
@@ -102,43 +107,40 @@ router.post(
     })
     .withMessage('Participants must be an array of UUIDs and must have at least one participant'),
   expressValidatorCheck,
-  GroupController.createGroupGroup,
+  ConversationController.createGroupConversation,
 );
-router.post(
-  '/group',
-  validateToken,
-  body('name').isString(),
-  body('code').isString(),
-  body('type').isString(),
-  body('avatar').optional().isString(),
-  expressValidatorCheck,
-  GroupController.createGroup,
-);
+
 router.put(
-  '/group/:id',
+  '/conversation/:id',
   validateToken,
   param('id').isUUID(),
   body('name').isString(),
   body('avatar').optional().isString(),
   expressValidatorCheck,
-  GroupController.updateGroup,
+  ConversationController.update,
 );
-router.delete('/group/:id', validateToken, param('id').isUUID(), expressValidatorCheck, GroupController.deleteGroup);
+router.delete(
+  '/conversation/:id',
+  validateToken,
+  param('id').isUUID(),
+  expressValidatorCheck,
+  ConversationController.delete,
+);
 
 // Message routes
 
 router.get(
-  '/message/group/:groupId',
+  '/message/conversation/:conversation_id',
   validateToken,
-  param('groupId').isUUID(),
+  param('conversation_id').isUUID(),
   expressValidatorCheck,
-  MessageController.getMessagesByGroupId,
+  MessageController.getByConversationId,
 );
 router.post(
   '/message',
   validateToken,
   body('message').isString(),
-  body('group_id').isUUID(),
+  body('conversation_id').isUUID(),
   body('type').isString(),
   expressValidatorCheck,
   MessageController.createMessage,
@@ -151,7 +153,7 @@ router.get('/contact/me', validateToken, ContactController.getContactsByOwnerId)
 router.post(
   '/contact',
   validateToken,
-  body('group_id').isUUID(),
+  body('conversation_id').isUUID(),
   body('user_id').isUUID(),
   expressValidatorCheck,
   ContactController.createContact,

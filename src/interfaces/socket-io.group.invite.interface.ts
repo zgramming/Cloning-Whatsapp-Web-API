@@ -1,4 +1,4 @@
-export interface SocketIOGroupInviteInterface {
-  group_id: string;
+export interface SocketIOInviteConversationInterface {
+  conversation_id: string;
   invited_by: string;
 }
