@@ -16,6 +16,8 @@ REST API for Whatsapp Web API
 - [x] Search user by phone number
 - [x] Realtime Chat
 - [x] Realtime indicator user is typing
+- [x] Group Chat
+
 
 ## Environment Variables
 
@@ -396,11 +398,8 @@ Install application with NPM
 
 ## Roadmap
 
-- [ ] Group Chat
 - [ ] Send media chat (Image, Video, File, Audio, etc...)
-- [ ] Update Profile
 - [ ] Emoji
-- [ ] Setting Page
 - [ ] Indicator message delivered, read, error
 
 ## License
